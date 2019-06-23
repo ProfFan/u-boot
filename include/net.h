@@ -26,6 +26,9 @@
  *	alignment in memory.
  *
  */
+#if defined(CONFIG_TCP)
+#define CONFIG_SYS_RX_ETH_BUFFER 12	/* For TCP */
+#endif
 
 #ifdef CONFIG_SYS_RX_ETH_BUFFER
 # define PKTBUFSRX	CONFIG_SYS_RX_ETH_BUFFER
@@ -344,6 +347,7 @@ struct vlan_ethernet_hdr {
 
 #define IPPROTO_ICMP	 1	/* Internet Control Message Protocol	*/
 #define IPPROTO_UDP	17	/* User Datagram Protocol		*/
+#define IPPROTO_TCP	 6	/* Transmission Control Protocol        */
 
 /*
  *	Internet Protocol (IP) header.

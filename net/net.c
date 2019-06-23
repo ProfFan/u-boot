@@ -187,6 +187,7 @@ int		net_ntp_time_offset;
 static uchar net_pkt_buf[(PKTBUFSRX+1) * PKTSIZE_ALIGN + PKTALIGN];
 /* Receive packets */
 uchar *net_rx_packets[PKTBUFSRX];
+
 /* Current UDP RX packet handler */
 static rxhand_f *udp_packet_handler;
 /* Current ARP RX packet handler */
@@ -1200,9 +1201,6 @@ void net_process_received_packet(uchar *in_packet, int len)
 		/* Can't deal with anything except IPv4 */
 		if ((ip->ip_hl_v & 0xf0) != 0x40)
 			return;
-		/* Can't deal with IP options (headers != 20 bytes) */
-		if ((ip->ip_hl_v & 0x0f) > 0x05)
-			return;
 		/* Check the Checksum of the header */
 		if (!ip_checksum_ok((uchar *)ip, IP_HDR_SIZE)) {
 			debug("checksum bad\n");
@@ -1245,6 +1243,7 @@ void net_process_received_packet(uchar *in_packet, int len)
 		 * we send a tftp packet to a dead connection, or when
 		 * there is no server at the other end.
 		 */
+
 		if (ip->ip_p == IPPROTO_ICMP) {
 			receive_icmp(ip, len, src_ip, et);
 			return;
@@ -1411,8 +1410,7 @@ common:
 }
 /**********************************************************************/
 
-int
-net_eth_hdr_size(void)
+int net_eth_hdr_size(void)
 {
 	ushort myvlanid;
 
