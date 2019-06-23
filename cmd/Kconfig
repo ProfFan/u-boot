@@ -1326,6 +1326,12 @@ config CMD_ETHSW
 	  operations such as enabling / disabling a port and
 	  viewing/maintaining the filtering database (FDB)
 
+config CMD_WGET
+	bool "wget"
+	select TCP
+	help
+	  Download a kernel, or other files, from a web server over TCP.
+
 config CMD_PXE
 	bool "pxe"
 	select MENU

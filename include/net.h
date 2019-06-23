@@ -21,14 +21,15 @@
 #define DEBUG_NET_PKT 0		/* Packets on info on the network at large */
 #define DEBUG_INT_STATE 0	/* Internal network state changes */
 
+#if defined(CONFIG_TCP)
+#define CONFIG_SYS_RX_ETH_BUFFER 12	/* For TCP */
+#endif
+
 /*
  *	The number of receive packet buffers, and the required packet buffer
  *	alignment in memory.
  *
  */
-#if defined(CONFIG_TCP)
-#define CONFIG_SYS_RX_ETH_BUFFER 12	/* For TCP */
-#endif
 
 #ifdef CONFIG_SYS_RX_ETH_BUFFER
 # define PKTBUFSRX	CONFIG_SYS_RX_ETH_BUFFER
@@ -346,8 +347,8 @@ struct vlan_ethernet_hdr {
 #define PROT_PPP_SES	0x8864		/* PPPoE session messages	*/
 
 #define IPPROTO_ICMP	 1	/* Internet Control Message Protocol	*/
+#define IPPROTO_TCP      6      /* Transmission Control Protocol        */
 #define IPPROTO_UDP	17	/* User Datagram Protocol		*/
-#define IPPROTO_TCP	 6	/* Transmission Control Protocol        */
 
 /*
  *	Internet Protocol (IP) header.
