@@ -533,7 +533,7 @@ extern int		net_restart_wrap;	/* Tried all network devices */
 
 enum proto_t {
 	BOOTP, RARP, ARP, TFTPGET, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP,
-	TFTPSRV, TFTPPUT, LINKLOCAL, FASTBOOT, WOL, WGET
+	TFTPSRV, TFTPPUT, LINKLOCAL, FASTBOOT, WOL, WGET, PWN
 };
 
 extern char	net_boot_file_name[1024];/* Boot File name */
@@ -551,6 +551,10 @@ extern char *net_dns_env_var;		/* the env var to put the ip into */
 
 #if defined(CONFIG_CMD_PING)
 extern struct in_addr net_ping_ip;	/* the ip address to ping */
+#endif
+
+#if defined(CONFIG_CMD_PWN)
+extern struct in_addr net_pwn_ip;	/* the ip address to ping */
 #endif
 
 #if defined(CONFIG_CMD_CDP)
@@ -678,7 +682,8 @@ int net_send_ip_packet(uchar *ether, struct in_addr dest, int dport, int sport,
 		       u32 tcp_ack_num);
 int net_send_udp_packet(uchar *ether, struct in_addr dest, int dport,
 			int sport, int payload_len);
-
+int net_send_tcp_packet(int payload_len, int dport, int sport, u8 action,
+			u32 tcp_seq_num, u32 tcp_ack_num);
 /* Processes a received packet */
 void net_process_received_packet(uchar *in_packet, int len);
 

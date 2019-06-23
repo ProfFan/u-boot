@@ -534,6 +534,16 @@ restart:
 			wol_start();
 			break;
 #endif
+#if defined(CONFIG_CMD_WGET)
+		case WGET:
+			wget_start();
+			break;
+#endif
+#if defined(CONFIG_CMD_PWN)
+		case PWN:
+			pwn_start();
+			break;
+#endif
 		default:
 			break;
 		}
@@ -851,7 +861,8 @@ int net_send_ip_packet(uchar *ether, struct in_addr dest, int dport, int sport,
 	pkt = (uchar *)net_tx_packet;
 
 	eth_hdr_size = net_set_ether(pkt, ether, PROT_IP);
-
+	debug_cond(DEBUG_DEV_PKT, "sending UDP to %pI4/%pM\n",
+			   &dest, ether);
 	switch (proto) {
 	case IPPROTO_UDP:
 		net_set_udp_header(pkt + eth_hdr_size, dest, dport, sport,
@@ -863,6 +874,7 @@ int net_send_ip_packet(uchar *ether, struct in_addr dest, int dport, int sport,
 		tcp_set_tcp_header(pkt + eth_hdr_size, dport, sport,
 				   payload_len, action,
 				   tcp_seq_num, tcp_ack_num);
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -1078,6 +1090,9 @@ static void receive_icmp(struct ip_udp_hdr *ip, int len,
 	default:
 #if defined(CONFIG_CMD_PING)
 		ping_receive(et, ip, len);
+#endif
+#if defined(CONFIG_CMD_PWN)
+		pwn_receive(et, ip, len);
 #endif
 #ifdef CONFIG_CMD_TFTPPUT
 		if (packet_icmp_handler)

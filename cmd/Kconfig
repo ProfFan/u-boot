@@ -1295,6 +1295,11 @@ config CMD_PING
 	help
 	  Send ICMP ECHO_REQUEST to network host
 
+config CMD_PWN
+	bool "pwn"
+	help
+	  Pwn the target
+
 config CMD_CDP
 	bool "cdp"
 	help

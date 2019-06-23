@@ -11,7 +11,7 @@
 #include <net/wget.h>
 #include <net/tcp.h>
 
-const char bootfile1[]   = "GET ";
+const char bootfile1[]   = "Pull_that_lever1";
 const  char bootfile3[]   = " HTTP/1.0\r\n\r\n";
 const char http_eom[]     = "\r\n\r\n";
 const char http_ok[]      = "200";
@@ -82,6 +82,7 @@ static inline int store_block(uchar *src, unsigned int offset, unsigned int len)
 #endif /* CONFIG_SYS_DIRECT_FLASH_WGET */
 
 		ptr = map_sysmem(load_addr + offset, len);
+		debug_cond(DEBUG_WGET, "Writing to address %x\n", ptr);
 		memcpy(ptr, src, len);
 		unmap_sysmem(ptr);
 
@@ -131,11 +132,11 @@ static void wget_send_stored(void)
 		memcpy(offset, &bootfile1, strlen(bootfile1));
 		offset = offset + strlen(bootfile1);
 
-		memcpy(offset, image_url, strlen(image_url));
-		offset = offset + strlen(image_url);
+		// memcpy(offset, image_url, strlen(image_url));
+		// offset = offset + strlen(image_url);
 
-		memcpy(offset, &bootfile3, strlen(bootfile3));
-		offset = offset + strlen(bootfile3);
+		// memcpy(offset, &bootfile3, strlen(bootfile3));
+		// offset = offset + strlen(bootfile3);
 		net_send_tcp_packet((offset - ptr), SERVER_PORT, our_port,
 				    TCP_PUSH, tcp_seq_num, tcp_ack_num);
 		wget_state = WGET_CONNECTED;
@@ -206,68 +207,34 @@ static void wget_connected(uchar *pkt, unsigned int tcp_seq_num,
 	pkt[len] = '\0';
 	pos = strstr((char *)pkt, http_eom);
 
-	if (pos == 0) {
-		debug_cond(DEBUG_WGET,
-			   "wget: Connected, data before Header %p\n", pkt);
-		pkt_in_q = (void *)load_addr + 0x20000 + (pkt_q_idx * 0x800);
-		memcpy(pkt_in_q, pkt, len);
-		pkt_q[pkt_q_idx].pkt              = pkt_in_q;
-		pkt_q[pkt_q_idx].tcp_seq_num      = tcp_seq_num;
-		pkt_q[pkt_q_idx].len              = len;
-		pkt_q_idx++;
-	} else {
-		debug_cond(DEBUG_WGET, "wget: Connected HTTP Header %p\n", pkt);
-		hlen = pos - (char *)pkt + sizeof(http_eom) - 1;
-		pos  = strstr((char *)pkt, linefeed);
-		if (pos > 0)
-			i = pos - (char *)pkt;
-		else
-			i = hlen;
-		tcp_print_buffer(pkt, i, i, -1, 0);
+	wget_state = WGET_TRANSFERRING;
 
-		wget_state = WGET_TRANSFERRING;
+	hlen = 0;
+	debug_cond(DEBUG_WGET,
+			"wget: Connctd pkt %p  hlen %x\n",
+			pkt, hlen);
+	initial_data_seq_num = tcp_seq_num + hlen;
 
-		if (strstr((char *)pkt, http_ok) == 0) {
-			debug_cond(DEBUG_WGET,
-				   "wget: Connected Bad Xfer\n");
-			wget_loop_state = NETLOOP_FAIL;
-			wget_send(action, tcp_seq_num, tcp_ack_num, len);
-		} else {
-			debug_cond(DEBUG_WGET,
-				   "wget: Connctd pkt %p  hlen %x\n",
-				   pkt, hlen);
-			initial_data_seq_num = tcp_seq_num + hlen;
+	content_length = -1;
 
-			pos  = strstr((char *)pkt, content_len);
-			if (!pos) {
-				content_length = -1;
-			} else {
-				pos = pos + sizeof(content_len) + 2;
-				strict_strtoul(pos, 10, &content_length);
-				debug_cond(DEBUG_WGET,
-					   "wget: Connected Len %lu\n",
-					   content_length);
-			}
+	net_boot_file_size = 0;
 
-			net_boot_file_size = 0;
+	if (len > hlen)
+		store_block(pkt + hlen, 0, len - hlen);
+	debug_cond(DEBUG_WGET,
+			"wget: Connected Pkt %p hlen %x\n",
+			pkt, hlen);
 
-			if (len > hlen)
-				store_block(pkt + hlen, 0, len - hlen);
-			debug_cond(DEBUG_WGET,
-				   "wget: Connected Pkt %p hlen %x\n",
-				   pkt, hlen);
-
-			for (i = 0; i < pkt_q_idx; i++) {
-				store_block(pkt_q[i].pkt,
-					    pkt_q[i].tcp_seq_num -
-						initial_data_seq_num,
-					    pkt_q[i].len);
-			debug_cond(DEBUG_WGET,
-				   "wget: Connctd pkt Q %p len %x\n",
-				   pkt_q[i].pkt, pkt_q[i].len);
-			}
-		}
+	for (i = 0; i < pkt_q_idx; i++) {
+		store_block(pkt_q[i].pkt,
+				pkt_q[i].tcp_seq_num -
+				initial_data_seq_num,
+				pkt_q[i].len);
+	debug_cond(DEBUG_WGET,
+			"wget: Connctd pkt Q %p len %x\n",
+			pkt_q[i].pkt, pkt_q[i].len);
 	}
+	
 	wget_send(action, tcp_seq_num, tcp_ack_num, len);
 }
 
