@@ -16,6 +16,12 @@ config NET_RANDOM_ETHADDR
 	  A new MAC address will be generated on every boot and it will
 	  not be added to the environment.
 
+config TCP
+	bool "Include Subset TCP stack for wget"
+	help
+	  TCP protocol support for wget.
+
+
 config NETCONSOLE
 	bool "NetConsole support"
 	help
